@@ -10,6 +10,16 @@ import java.util.List;
 public class UserDaoJDBCImpl implements UserDao {
     public UserDaoJDBCImpl() {}
 
+    private void rollbackQuietly(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.rollback();
+            } catch (SQLException e) {
+                System.err.println("Ошибка при rollback: " + e.getMessage());
+            }
+        }
+    }
+
     @Override
     public void createUsersTable() {
         String sql = "CREATE TABLE IF NOT EXISTS users (" +
@@ -19,37 +29,41 @@ public class UserDaoJDBCImpl implements UserDao {
                 "age TINYINT, " +
                 "PRIMARY KEY (id))";
 
-        try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement()) {
-
+        Connection connection = null;
+        try {
+            connection = Util.getConnection();
+            Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
             connection.commit();
             System.out.println("Таблица создана (если не существовала)");
-
         } catch (SQLException e) {
-            rollbackQuietly();
+            rollbackQuietly(connection);
             e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException ignored) {}
         }
-    }
-
-    private void rollbackQuietly() {
-
     }
 
     @Override
     public void dropUsersTable() {
         String sql = "DROP TABLE IF EXISTS users";
 
-        try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement()) {
-
+        Connection connection = null;
+        try {
+            connection = Util.getConnection();
+            Statement statement = connection.createStatement();
             statement.executeUpdate(sql);
             connection.commit();
             System.out.println("Таблица удалена (если существовала)");
-
         } catch (SQLException e) {
-            rollbackQuietly();
+            rollbackQuietly(connection);
             e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException ignored) {}
         }
     }
 
@@ -57,19 +71,23 @@ public class UserDaoJDBCImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
         String sql = "INSERT INTO users (name, lastName, age) VALUES (?, ?, ?)";
 
-        try (Connection connection = Util.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-
+        Connection connection = null;
+        try {
+            connection = Util.getConnection();
+            PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1, name);
             ps.setString(2, lastName);
             ps.setByte(3, age);
             ps.executeUpdate();
             connection.commit();
             System.out.println("User с именем – " + name + " добавлен в базу данных");
-
         } catch (SQLException e) {
-            rollbackQuietly();
+            rollbackQuietly(connection);
             e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException ignored) {}
         }
     }
 
@@ -77,17 +95,21 @@ public class UserDaoJDBCImpl implements UserDao {
     public void removeUserById(long id) {
         String sql = "DELETE FROM users WHERE id = ?";
 
-        try (Connection connection = Util.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-
+        Connection connection = null;
+        try {
+            connection = Util.getConnection();
+            PreparedStatement ps = connection.prepareStatement(sql);
             ps.setLong(1, id);
             ps.executeUpdate();
             connection.commit();
             System.out.println("User с id = " + id + " удалён из базы");
-
         } catch (SQLException e) {
-            rollbackQuietly();
+            rollbackQuietly(connection);
             e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException ignored) {}
         }
     }
 
@@ -96,9 +118,11 @@ public class UserDaoJDBCImpl implements UserDao {
         List<User> userList = new ArrayList<>();
         String sql = "SELECT * FROM users";
 
-        try (Connection connection = Util.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(sql)) {
+        Connection connection = null;
+        try {
+            connection = Util.getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery(sql);
 
             while (rs.next()) {
                 User user = new User();
@@ -109,8 +133,14 @@ public class UserDaoJDBCImpl implements UserDao {
                 userList.add(user);
             }
 
+            connection.commit(); // Необязательно, но допустимо
         } catch (SQLException e) {
+            rollbackQuietly(connection);
             e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException ignored) {}
         }
 
         return userList;
@@ -120,16 +150,20 @@ public class UserDaoJDBCImpl implements UserDao {
     public void cleanUsersTable() {
         String sql = "TRUNCATE TABLE users";
 
+        Connection connection = null;
         try {
-            Connection connection = Util.getConnection();
-            try {
-            } finally {
-                connection.close();
-            }
+            connection = Util.getConnection();
+            Statement statement = connection.createStatement();
+            statement.executeUpdate(sql);
+            connection.commit();
+            System.out.println("Таблица очищена");
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            rollbackQuietly(connection);
+            e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException ignored) {}
         }
     }
 }
-
-

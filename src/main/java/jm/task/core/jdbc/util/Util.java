@@ -9,21 +9,19 @@ public class Util {
     private static final String USERNAME = "root";
     private static final String PASSWORD = "tahmina09090+++";
 
-    private static Connection connection;
-
     public static Connection getConnection() {
-        if (connection == null) {
-            try {
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                connection.setAutoCommit(false);
-                System.out.println("✅ Подключение к базе успешно");
-            } catch (SQLException e) {
-                System.err.println("❌ Ошибка подключения к базе: " + e.getMessage());
-            } catch (ClassNotFoundException e) {
-                System.err.println("❌ JDBC Driver не найден: " + e.getMessage());
-            }
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            connection.setAutoCommit(false);
+            System.out.println("✅ Подключение к базе успешно");
+            return connection;
+        } catch (SQLException e) {
+            System.err.println("❌ Ошибка подключения к базе: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            System.err.println("❌ JDBC Driver не найден: " + e.getMessage());
         }
-        return connection;
+        return null;
     }
 }
+
