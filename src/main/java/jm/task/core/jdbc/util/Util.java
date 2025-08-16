@@ -5,23 +5,24 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Util {
-    private static final String URL = "jdbc:mysql://localhost:3306/preproject";
+    private static final String URL = "jdbc:mysql://localhost:3306/preproject?useSSL=false&serverTimezone=UTC";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "tahmina09090+++";
 
-    public static Connection getConnection() {
-        Connection connection = null;
-        try {
-            // Регистрируем драйвер (с MySQL 8+ это необязательно, но пусть будет явно)
-            Class.forName("com.mysql.cj.jdbc.Driver");
+    private static Connection connection;
 
-            // Получаем подключение
-            connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            System.out.println("Подключение к базе успешно");
-        } catch (SQLException e) {
-            System.err.println("Ошибка при подключении к базе: " + e.getMessage());
-        } catch (ClassNotFoundException e) {
-            System.err.println("JDBC Driver не найден: " + e.getMessage());
+    public static Connection getConnection() {
+        if (connection == null) {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                connection.setAutoCommit(false);
+                System.out.println("✅ Подключение к базе успешно");
+            } catch (SQLException e) {
+                System.err.println("❌ Ошибка подключения к базе: " + e.getMessage());
+            } catch (ClassNotFoundException e) {
+                System.err.println("❌ JDBC Driver не найден: " + e.getMessage());
+            }
         }
         return connection;
     }
