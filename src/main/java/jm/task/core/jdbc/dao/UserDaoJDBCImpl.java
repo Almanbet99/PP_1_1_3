@@ -133,7 +133,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 userList.add(user);
             }
 
-            connection.commit(); // Необязательно, но допустимо
+            connection.commit();
         } catch (SQLException e) {
             rollbackQuietly(connection);
             e.printStackTrace();
